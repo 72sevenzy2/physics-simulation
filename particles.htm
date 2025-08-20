@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Complex Interactive HTML</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: rgb(255, 255, 255);
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            height: 10px;
+            background-color: rgba(283, 282, 283, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            color: rgba(283, 282, 283, 0.1);
+        }
+
+        .slider {
+            width: 200px;
+            position: relative;
+            top: -3.5vh;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: rgb(0, 0, 0);
+            color: black;
+            border: none;
+            border-radius: 5px;
+            position: relative;
+            top: -20vh;
+            cursor: crosshair;
+        }
+
+        button:hover {
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="ui">
+        <label>Particle Count: <span id="count">100</span></label><br>
+        <input type="range" min="10" max="500" value="100" id="particleRange" class="slider"><br>
+        <button id="explodeBtn">Explode!</button>
+        <div id="message"></div>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas'); const ctx = canvas.getContext('2d');
+        const range = document.getElementById('particleRange'); const countDisplay = document.getElementById('count');
+        const explodeBtn = document.getElementById('explodeBtn'); const message = document.getElementById('message');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        class Particle {
+            constructor(x, y, angle, speed, color) {
+                this.x = x; this.y = y; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.size = Math.random() * 3 + 2; this.color = color; this.life = 10;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.vy += 0.05; this.life -= 1;
+                if (this.x + this.size > canvas.width) { this.x = canvas.width - this.size; this.vx *= -1 };
+                if (this.x - this.size < 0) { this.x = this.size; this.vx *= -1 };
+                if (this.y + this.size > canvas.height) { this.y = canvas.height - this.size; this.vy *= -1 };
+                if (this.y - this.size < 0) { this.y = this.size; this.vy *= -1 };
+            };
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.fill(); ctx.closePath();
+            }
+        } let particles = [];
+        function createParticles(x, y, num) {
+            for (let i = 0; i < num; i++) {
+                let angle = Math.random() * Math.PI * 2; let speed = Math.random() * 15 + 1;
+                let color = `hsl(${Math.random() * 360}, 0%, 100%)`; particles.push(new Particle(x, y, angle, speed, color));
+            }
+        }
+        function animate() {
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.life > 0); for (let p of particles) { p.update(); p.draw(); };
+            requestAnimationFrame(animate);
+        } animate();
+        canvas.addEventListener('click', e => { createParticles(e.clientX, e.clientY, parseInt(range.value)); });
+        range.addEventListener('input', () => { countDisplay.textContent = range.value; });
+        explodeBtn.addEventListener('click', () => {
+            let x = Math.random() * canvas.width; let y = Math.random() * canvas.height;
+            createParticles(x, y, parseInt(range.value)); setTimeout(() => message.textContent = "", 1000);
+        });
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    </script>
+</body>
+
+</html>
